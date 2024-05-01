@@ -1,8 +1,9 @@
+import os
 import time
 import random
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, Lock
 
-def is_prime(n): #miller rabin
+def is_prime(n):  # Miller-Rabin
     if n <= 3:
         return n == 2 or n == 3
     if n % 2 == 0:
@@ -29,16 +30,28 @@ def is_prime(n): #miller rabin
             return False
     return True
 
-def find_next_prime(max_prime):
-    print("bruh")
+def worker(max_prime, lock):
+    while True:
+        with lock:
+            start_number = max_prime.value * random.randint(2, 10)  # Começa a partir do último primo encontrado multiplicado por um fator aleatório
+        current_number = start_number
+        while True:
+            if is_prime(current_number):
+                with lock:
+                    if current_number > max_prime.value:  # Verifica se o número primo encontrado é maior que o maior primo atual
+                        max_prime.value = current_number  # Atualiza o maior primo encontrado se necessário
+                        print("New max prime found by process", current_number, " - pid: ", os.getpid())
+                break
+            current_number += 1
 
 def find_max_prime(timeout, num_processes):
     manager = Manager()
-    max_prime = manager.Value('i', 3)  # Shared integer value
+    max_prime = manager.Value('i', 3)
+    lock = Lock()
 
     processes = []
-    for _ in range(num_processes):
-        process = Process(target=find_next_prime, args=(max_prime,))
+    for i in range(num_processes):
+        process = Process(target=worker, args=(max_prime, lock))
         process.start()
         processes.append(process)
 
@@ -52,14 +65,11 @@ def find_max_prime(timeout, num_processes):
     end_time = time.monotonic()
     return max_prime.value, end_time - start_time
 
-def next_number_with_one_more_digit(number):
-    num_digits = len(str(number))
-    next_number = int('1' + '0' * num_digits) + 1
-    return next_number
-
 if __name__ == '__main__':
     num_processes = int(input("Enter the number of processes to create: "))
     timeout = int(input("Enter the duration (in seconds) for the program to run: "))
     max_prime, runtime = find_max_prime(timeout, num_processes)
-    print("Maximum prime found:", max_prime)
+    max_prime_str = str(max_prime)
+    num_digits = len(max_prime_str)
+    print("Maximum prime found:", max_prime, " (", num_digits, ")")
     print("Runtime:", runtime, "seconds")
