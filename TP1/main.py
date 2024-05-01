@@ -3,6 +3,7 @@ import time
 import random
 from multiprocessing import Process, Manager, Lock
 
+
 def is_prime(n):  # Miller-Rabin
     if n <= 3:
         return n == 2 or n == 3
@@ -30,10 +31,12 @@ def is_prime(n):  # Miller-Rabin
             return False
     return True
 
+
 def worker(max_prime, lock):
     while True:
         with lock:
-            start_number = max_prime.value * random.randint(2, 10)  # Começa a partir do último primo encontrado multiplicado por um fator aleatório
+            start_number = max_prime.value * random.randint(2,
+                                                            10)  # Começa a partir do último primo encontrado multiplicado por um fator aleatório
         current_number = start_number
         while True:
             if is_prime(current_number):
@@ -43,6 +46,7 @@ def worker(max_prime, lock):
                         print("New max prime found by process", current_number, " - pid: ", os.getpid())
                 break
             current_number += 1
+
 
 def find_max_prime(timeout, num_processes):
     manager = Manager()
@@ -55,15 +59,16 @@ def find_max_prime(timeout, num_processes):
         process.start()
         processes.append(process)
 
-    start_time = time.monotonic()
-    while time.monotonic() - start_time < timeout:
+    start_time = time.time()
+    while time.time() - start_time < timeout:
         pass
 
     for process in processes:
         process.terminate()
 
-    end_time = time.monotonic()
+    end_time = time.time()
     return max_prime.value, end_time - start_time
+
 
 if __name__ == '__main__':
     num_processes = int(input("Enter the number of processes to create: "))
