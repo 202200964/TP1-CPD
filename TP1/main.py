@@ -35,14 +35,16 @@ def is_prime(n):  # Miller-Rabin
 def worker(max_prime, lock):
     while True:
         with lock:
-            start_number = max_prime.value * random.randint(2,
-                                                            10)  # Começa a partir do último primo encontrado multiplicado por um fator aleatório
+            start_number = max_prime.value * random.randint(2, 8)  # fator aleatorio
         current_number = start_number
         while True:
+            #with lock:
+             #   if current_number < max_prime.value:
+              #      break
             if is_prime(current_number):
                 with lock:
-                    if current_number > max_prime.value:  # Verifica se o número primo encontrado é maior que o maior primo atual
-                        max_prime.value = current_number  # Atualiza o maior primo encontrado se necessário
+                    if current_number > max_prime.value:
+                        max_prime.value = current_number
                         print("New max prime found by process", current_number, " - pid: ", os.getpid())
                 break
             current_number += 1
